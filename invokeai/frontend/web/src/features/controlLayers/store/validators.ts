@@ -59,6 +59,27 @@ export const getRegionalGuidanceWarnings = (
       }
     }
 
+    if (model.base === 'z-image') {
+      // Z-Image has similar limitations to FLUX - no negative prompts via CFG by default
+      // Reference images (IP Adapters) are not supported for Z-Image
+      if (entity.referenceImages.length > 0) {
+        warnings.push(WARNINGS.RG_REFERENCE_IMAGES_NOT_SUPPORTED);
+      }
+      if (entity.autoNegative) {
+        warnings.push(WARNINGS.RG_AUTO_NEGATIVE_NOT_SUPPORTED);
+      }
+    }
+
+    if (model.base === 'anima') {
+      // Reference images (IP Adapters) are not supported for Anima
+      if (entity.referenceImages.length > 0) {
+        warnings.push(WARNINGS.RG_REFERENCE_IMAGES_NOT_SUPPORTED);
+      }
+      if (entity.autoNegative) {
+        warnings.push(WARNINGS.RG_AUTO_NEGATIVE_NOT_SUPPORTED);
+      }
+    }
+
     entity.referenceImages.forEach(({ config }) => {
       if (!config.model) {
         // No model selected
@@ -106,7 +127,7 @@ export const getGlobalReferenceImageWarnings = (
   const warnings: WarningTKey[] = [];
 
   if (model) {
-    if (model.base === 'sd-3' || model.base === 'sd-2') {
+    if (model.base === 'sd-3' || model.base === 'sd-2' || model.base === 'anima') {
       // Unsupported model architecture
       warnings.push(WARNINGS.UNSUPPORTED_MODEL);
       return warnings;
@@ -114,12 +135,15 @@ export const getGlobalReferenceImageWarnings = (
 
     const { config } = entity;
 
-    if (!config.model) {
-      // No model selected
-      warnings.push(WARNINGS.IP_ADAPTER_NO_MODEL_SELECTED);
-    } else if (!areBasesCompatibleForRefImage(config.model, model)) {
-      // Supported model architecture but doesn't match
-      warnings.push(WARNINGS.IP_ADAPTER_INCOMPATIBLE_BASE_MODEL);
+    // FLUX.2 reference images don't require a model - it's built-in
+    if (config.type !== 'flux2_reference_image') {
+      if (!('model' in config) || !config.model) {
+        // No model selected
+        warnings.push(WARNINGS.IP_ADAPTER_NO_MODEL_SELECTED);
+      } else if (!areBasesCompatibleForRefImage(config.model, model)) {
+        // Supported model architecture but doesn't match
+        warnings.push(WARNINGS.IP_ADAPTER_INCOMPATIBLE_BASE_MODEL);
+      }
     }
 
     if (!entity.config.image) {
@@ -146,7 +170,7 @@ export const getControlLayerWarnings = (
     // No model selected
     warnings.push(WARNINGS.CONTROL_ADAPTER_NO_MODEL_SELECTED);
   } else if (model) {
-    if (model.base === 'sd-3' || model.base === 'sd-2') {
+    if (model.base === 'sd-3' || model.base === 'sd-2' || model.base === 'anima') {
       // Unsupported model architecture
       warnings.push(WARNINGS.UNSUPPORTED_MODEL);
     } else if (entity.controlAdapter.model.base !== model.base) {

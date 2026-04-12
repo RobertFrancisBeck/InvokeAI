@@ -16,6 +16,10 @@ export const zBoardField = z.object({
 });
 export type BoardField = z.infer<typeof zBoardField>;
 
+export const zStylePresetField = z.object({
+  style_preset_id: z.string().trim().min(1),
+});
+
 export const zColorField = z.object({
   r: z.number().int().min(0).max(255),
   g: z.number().int().min(0).max(255),
@@ -60,6 +64,24 @@ export const zSchedulerField = z.enum([
   'tcd',
 ]);
 export type SchedulerField = z.infer<typeof zSchedulerField>;
+
+// Flux-specific scheduler options (Flow Matching schedulers)
+export const zFluxSchedulerField = z.enum(['euler', 'heun', 'lcm']);
+
+// Z-Image scheduler options (Flow Matching schedulers)
+// Note: LCM is only supported for Z-Image Turbo, not for Z-Image Base (undistilled)
+export const zZImageSchedulerField = z.enum(['euler', 'heun', 'lcm']);
+// Anima scheduler options (same flow-matching schedulers, defined separately to avoid coupling)
+export const zAnimaSchedulerField = z.enum(['euler', 'heun', 'lcm']);
+
+// Flux DyPE (Dynamic Position Extrapolation) preset options for high-resolution generation
+export const zFluxDypePresetField = z.enum(['off', 'manual', 'auto', 'area', '4k']);
+
+// Flux DyPE scale (magnitude λs) - 0.0-8.0, default 2.0
+export const zFluxDypeScaleField = z.number().min(0).max(8);
+
+// Flux DyPE exponent (decay speed λt) - 0.0-1000.0, default 2.0
+export const zFluxDypeExponentField = z.number().min(0).max(1000);
 // #endregion
 
 // #region Model-related schemas
@@ -71,11 +93,14 @@ export const zBaseModelType = z.enum([
   'sdxl',
   'sdxl-refiner',
   'flux',
+  'flux2',
   'cogview4',
+  'z-image',
+  'anima',
   'unknown',
 ]);
 export type BaseModelType = z.infer<typeof zBaseModelType>;
-export const zMainModelBase = z.enum(['sd-1', 'sd-2', 'sd-3', 'sdxl', 'flux', 'cogview4']);
+export const zMainModelBase = z.enum(['sd-1', 'sd-2', 'sd-3', 'sdxl', 'flux', 'flux2', 'cogview4', 'z-image', 'anima']);
 type MainModelBase = z.infer<typeof zMainModelBase>;
 export const isMainModelBase = (base: unknown): base is MainModelBase => zMainModelBase.safeParse(base).success;
 export const zModelType = z.enum([
@@ -92,6 +117,7 @@ export const zModelType = z.enum([
   'clip_vision',
   'spandrel_image_to_image',
   't5_encoder',
+  'qwen3_encoder',
   'clip_embed',
   'siglip',
   'flux_redux',
@@ -117,7 +143,17 @@ export const zSubModelType = z.enum([
 export const zClipVariantType = z.enum(['large', 'gigantic']);
 export const zModelVariantType = z.enum(['normal', 'inpaint', 'depth']);
 export const zFluxVariantType = z.enum(['dev', 'dev_fill', 'schnell']);
-export const zAnyModelVariant = z.union([zModelVariantType, zClipVariantType, zFluxVariantType]);
+export const zFlux2VariantType = z.enum(['klein_4b', 'klein_9b', 'klein_9b_base']);
+export const zZImageVariantType = z.enum(['turbo', 'zbase']);
+export const zQwen3VariantType = z.enum(['qwen3_4b', 'qwen3_8b', 'qwen3_06b']);
+export const zAnyModelVariant = z.union([
+  zModelVariantType,
+  zClipVariantType,
+  zFluxVariantType,
+  zFlux2VariantType,
+  zZImageVariantType,
+  zQwen3VariantType,
+]);
 export type AnyModelVariant = z.infer<typeof zAnyModelVariant>;
 export const zModelFormat = z.enum([
   'omi',
@@ -130,6 +166,7 @@ export const zModelFormat = z.enum([
   'embedding_folder',
   'invokeai',
   't5_encoder',
+  'qwen3_encoder',
   'bnb_quantized_int8b',
   'bnb_quantized_nf4b',
   'gguf_quantized',

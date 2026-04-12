@@ -1,4 +1,5 @@
 import { useAppSelector } from 'app/store/storeHooks';
+import { useIsUncommittedCanvasTextSessionActive } from 'features/controlLayers/hooks/useIsUncommittedCanvasTextSessionActive';
 import { selectCustomHotkeys } from 'features/system/store/hotkeysSlice';
 import { useMemo } from 'react';
 import { type HotkeyCallback, type Options, useHotkeys } from 'react-hotkeys-hook';
@@ -6,6 +7,17 @@ import { useTranslation } from 'react-i18next';
 import { assert } from 'tsafe';
 
 type HotkeyCategory = 'app' | 'canvas' | 'viewer' | 'gallery' | 'workflows';
+
+// Centralized platform detection - computed once
+export const IS_MAC_OS =
+  typeof navigator !== 'undefined' &&
+  (
+    (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform ??
+    navigator.platform ??
+    ''
+  )
+    .toLowerCase()
+    .includes('mac');
 
 export type Hotkey = {
   id: string;
@@ -22,9 +34,9 @@ type HotkeyCategoryData = { title: string; hotkeys: Record<string, Hotkey> };
 
 type HotkeysData = Record<HotkeyCategory, HotkeyCategoryData>;
 
-const formatKeysForPlatform = (keys: string[], isMacOS: boolean): string[][] => {
+const formatKeysForPlatform = (keys: string[]): string[][] => {
   return keys.map((k) => {
-    if (isMacOS) {
+    if (IS_MAC_OS) {
       return k.split('+').map((i) => i.replaceAll('mod', 'cmd').replaceAll('alt', 'option'));
     } else {
       return k.split('+').map((i) => i.replaceAll('mod', 'ctrl'));
@@ -35,9 +47,6 @@ const formatKeysForPlatform = (keys: string[], isMacOS: boolean): string[][] => 
 export const useHotkeyData = (): HotkeysData => {
   const { t } = useTranslation();
   const customHotkeys = useAppSelector(selectCustomHotkeys);
-  const isMacOS = useMemo(() => {
-    return navigator.userAgent.toLowerCase().includes('mac');
-  }, []);
 
   const hotkeysData = useMemo<HotkeysData>(() => {
     const data: HotkeysData = {
@@ -73,7 +82,7 @@ export const useHotkeyData = (): HotkeysData => {
         desc: t(`hotkeys.${category}.${id}.desc`),
         hotkeys: effectiveKeys,
         defaultHotkeys: keys,
-        platformKeys: formatKeysForPlatform(effectiveKeys, isMacOS),
+        platformKeys: formatKeysForPlatform(effectiveKeys),
         isEnabled,
       };
     };
@@ -177,9 +186,30 @@ export const useHotkeyData = (): HotkeysData => {
     addHotkey('gallery', 'starImage', ['.']);
 
     return data;
-  }, [customHotkeys, isMacOS, t]);
+  }, [customHotkeys, t]);
 
   return hotkeysData;
+};
+
+export type HotkeyConflictInfo = { category: string; id: string; title: string; fullId: string };
+
+/**
+ * Returns a map of all registered hotkeys for conflict detection.
+ * Computed once and shared across all hotkey items.
+ */
+export const useHotkeyConflictMap = (): Map<string, HotkeyConflictInfo> => {
+  const hotkeysData = useHotkeyData();
+  return useMemo(() => {
+    const map = new Map<string, HotkeyConflictInfo>();
+    for (const [category, categoryData] of Object.entries(hotkeysData)) {
+      for (const [id, hotkeyData] of Object.entries(categoryData.hotkeys)) {
+        for (const hotkeyString of hotkeyData.hotkeys) {
+          map.set(hotkeyString, { category, id, title: hotkeyData.title, fullId: `${category}.${id}` });
+        }
+      }
+    }
+    return map;
+  }, [hotkeysData]);
 };
 
 type UseRegisteredHotkeysArg = {
@@ -212,6 +242,7 @@ type UseRegisteredHotkeysArg = {
  * A wrapper around `useHotkeys` that adds a handler for a registered hotkey.
  */
 export const useRegisteredHotkeys = ({ id, category, callback, options, dependencies }: UseRegisteredHotkeysArg) => {
+  const isUncommittedCanvasTextSessionActive = useIsUncommittedCanvasTextSessionActive();
   const hotkeysData = useHotkeyData();
   const data = useMemo(() => {
     const _data = hotkeysData[category].hotkeys[id];
@@ -232,5 +263,38 @@ export const useRegisteredHotkeys = ({ id, category, callback, options, dependen
     } satisfies Options;
   }, [data.isEnabled, options]);
 
-  return useHotkeys(data.hotkeys, callback, _options, dependencies);
+  const _optionsWithCanvasTextGuard = useMemo(() => {
+    return {
+      ..._options,
+      enabled: (event, hotkeysEvent) => {
+        // Suppress all registered hotkeys while text editing is still uncommitted.
+        if (isUncommittedCanvasTextSessionActive()) {
+          return false;
+        }
+        if (typeof _options.enabled === 'function') {
+          return _options.enabled(event, hotkeysEvent);
+        }
+        return _options.enabled ?? true;
+      },
+    } satisfies Options;
+  }, [_options, isUncommittedCanvasTextSessionActive]);
+
+  return useHotkeys(data.hotkeys, callback, _optionsWithCanvasTextGuard, dependencies);
+};
+
+/*
+ * Returns true if any hotkeys have been modified from their default values.
+ */
+export const isHotkeysModified = (hotkeysData: HotkeysData): boolean => {
+  for (const categoryData of Object.values(hotkeysData)) {
+    for (const hotkeyData of Object.values(categoryData.hotkeys)) {
+      if (
+        hotkeyData.hotkeys.length !== hotkeyData.defaultHotkeys.length ||
+        !hotkeyData.hotkeys.every((key, index) => key === hotkeyData.defaultHotkeys[index])
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
 };

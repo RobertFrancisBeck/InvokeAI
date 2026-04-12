@@ -1,5 +1,5 @@
 import type { SystemStyleObject } from '@invoke-ai/ui-library';
-import { Flex, Icon, IconButton, Image, Skeleton, Text, Tooltip } from '@invoke-ai/ui-library';
+import { Flex, Icon, IconButton, Skeleton, Text, Tooltip } from '@invoke-ai/ui-library';
 import { useAppDispatch, useAppSelector } from 'app/store/storeHooks';
 import { round } from 'es-toolkit/compat';
 import { useRefImageEntity } from 'features/controlLayers/components/RefImage/useRefImageEntity';
@@ -13,6 +13,7 @@ import {
 import { isIPAdapterConfig } from 'features/controlLayers/store/types';
 import { getGlobalReferenceImageWarnings } from 'features/controlLayers/store/validators';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PiExclamationMarkBold, PiEyeSlashBold, PiImageBold } from 'react-icons/pi';
 import { useImageDTOFromCroppableImage } from 'services/api/endpoints/images';
 
@@ -64,6 +65,7 @@ const getImageSxWithWeight = (weight: number): SystemStyleObject => {
 };
 
 export const RefImagePreview = memo(() => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const id = useRefImageIdContext();
   const entity = useRefImageEntity(id);
@@ -105,7 +107,7 @@ export const RefImagePreview = memo(() => {
   if (!entity.config.image) {
     return (
       <IconButton
-        aria-label="Select Ref Image"
+        aria-label={t('controlLayers.selectRefImage')}
         h="full"
         variant="ghost"
         aspectRatio="1/1"
@@ -144,15 +146,16 @@ export const RefImagePreview = memo(() => {
         cursor="pointer"
         overflow="hidden"
       >
-        <Image
-          src={imageDTO?.image_url}
-          objectFit="contain"
-          aspectRatio="1/1"
-          height={imageDTO?.height}
-          fallback={<Skeleton h="full" aspectRatio="1/1" />}
-          maxW="full"
-          maxH="full"
-        />
+        {imageDTO ? (
+          <img
+            src={imageDTO.image_url}
+            style={{ objectFit: 'contain', aspectRatio: '1 / 1', maxWidth: '100%', maxHeight: '100%' }}
+            height={imageDTO.height}
+            alt={imageDTO.image_name}
+          />
+        ) : (
+          <Skeleton h="full" aspectRatio="1/1" />
+        )}
         {isIPAdapterConfig(entity.config) && (
           <Flex
             position="absolute"

@@ -79,7 +79,9 @@ export type OffsetPaginatedResults_ImageDTO_ = S['OffsetPaginatedResults_ImageDT
 // Model Configs
 export type AnyModelConfig = S['AnyModelConfig'];
 export type MainModelConfig = Extract<S['AnyModelConfig'], { type: 'main' }>;
-export type FLUXModelConfig = Extract<S['AnyModelConfig'], { type: 'main'; base: 'flux' }>;
+type FLUXModelConfig = Extract<S['AnyModelConfig'], { type: 'main'; base: 'flux' }>;
+type FLUX2ModelConfig = Extract<S['AnyModelConfig'], { type: 'main'; base: 'flux2' }>;
+export type AnyFLUXModelConfig = FLUXModelConfig | FLUX2ModelConfig;
 export type ControlLoRAModelConfig = Extract<S['AnyModelConfig'], { type: 'control_lora' }>;
 export type LoRAModelConfig = Extract<S['AnyModelConfig'], { type: 'lora' }>;
 export type VAEModelConfig = Extract<S['AnyModelConfig'], { type: 'vae' }>;
@@ -89,16 +91,17 @@ export type T2IAdapterModelConfig = Extract<S['AnyModelConfig'], { type: 't2i_ad
 export type CLIPLEmbedModelConfig = Extract<S['AnyModelConfig'], { type: 'clip_embed'; variant: 'large' }>;
 export type CLIPGEmbedModelConfig = Extract<S['AnyModelConfig'], { type: 'clip_embed'; variant: 'gigantic' }>;
 export type CLIPEmbedModelConfig = Extract<S['AnyModelConfig'], { type: 'clip_embed' }>;
-type LlavaOnevisionConfig = Extract<S['AnyModelConfig'], { type: 'llava_onevision' }>;
+export type LlavaOnevisionModelConfig = Extract<S['AnyModelConfig'], { type: 'llava_onevision' }>;
 export type T5EncoderModelConfig = Extract<S['AnyModelConfig'], { type: 't5_encoder' }>;
 export type T5EncoderBnbQuantizedLlmInt8bModelConfig = Extract<
   S['AnyModelConfig'],
   { type: 't5_encoder'; format: 'bnb_quantized_int8b' }
 >;
+export type Qwen3EncoderModelConfig = Extract<S['AnyModelConfig'], { type: 'qwen3_encoder' }>;
 export type SpandrelImageToImageModelConfig = Extract<S['AnyModelConfig'], { type: 'spandrel_image_to_image' }>;
 export type CheckpointModelConfig = Extract<S['AnyModelConfig'], { type: 'main'; format: 'checkpoint' }>;
-type CLIPVisionDiffusersConfig = Extract<S['AnyModelConfig'], { type: 'clip_vision' }>;
-type SigLipModelConfig = Extract<S['AnyModelConfig'], { type: 'siglip' }>;
+export type CLIPVisionModelConfig = Extract<S['AnyModelConfig'], { type: 'clip_vision' }>;
+export type SigLIPModelConfig = Extract<S['AnyModelConfig'], { type: 'siglip' }>;
 export type FLUXReduxModelConfig = Extract<S['AnyModelConfig'], { type: 'flux_redux' }>;
 type ApiModelConfig = Extract<S['AnyModelConfig'], { format: 'api' }>;
 type UnknownModelConfig = Extract<S['AnyModelConfig'], { type: 'unknown' }>;
@@ -167,14 +170,36 @@ export const isNonFluxVAEModelConfig = (
 ): config is VAEModelConfig => {
   return (
     (config.type === 'vae' || (!excludeSubmodels && config.type === 'main' && checkSubmodels(['vae'], config))) &&
-    config.base !== 'flux'
+    config.base !== 'flux' &&
+    config.base !== 'flux2'
   );
 };
 
 export const isFluxVAEModelConfig = (config: AnyModelConfig, excludeSubmodels?: boolean): config is VAEModelConfig => {
   return (
     (config.type === 'vae' || (!excludeSubmodels && config.type === 'main' && checkSubmodels(['vae'], config))) &&
+    (config.base === 'flux' || config.base === 'flux2')
+  );
+};
+
+export const isFlux1VAEModelConfig = (config: AnyModelConfig, excludeSubmodels?: boolean): config is VAEModelConfig => {
+  return (
+    (config.type === 'vae' || (!excludeSubmodels && config.type === 'main' && checkSubmodels(['vae'], config))) &&
     config.base === 'flux'
+  );
+};
+
+export const isFlux2VAEModelConfig = (config: AnyModelConfig, excludeSubmodels?: boolean): config is VAEModelConfig => {
+  return (
+    (config.type === 'vae' || (!excludeSubmodels && config.type === 'main' && checkSubmodels(['vae'], config))) &&
+    config.base === 'flux2'
+  );
+};
+
+export const isAnimaVAEModelConfig = (config: AnyModelConfig, excludeSubmodels?: boolean): config is VAEModelConfig => {
+  return (
+    (config.type === 'vae' || (!excludeSubmodels && config.type === 'main' && checkSubmodels(['vae'], config))) &&
+    config.base === 'anima'
   );
 };
 
@@ -192,11 +217,11 @@ export const isIPAdapterModelConfig = (config: AnyModelConfig): config is IPAdap
   return config.type === 'ip_adapter';
 };
 
-export const isCLIPVisionModelConfig = (config: AnyModelConfig): config is CLIPVisionDiffusersConfig => {
+export const isCLIPVisionModelConfig = (config: AnyModelConfig): config is CLIPVisionModelConfig => {
   return config.type === 'clip_vision';
 };
 
-export const isLLaVAModelConfig = (config: AnyModelConfig): config is LlavaOnevisionConfig => {
+export const isLLaVAModelConfig = (config: AnyModelConfig): config is LlavaOnevisionModelConfig => {
   return config.type === 'llava_onevision';
 };
 
@@ -218,6 +243,14 @@ export const isT5EncoderModelConfig = (
   config: AnyModelConfig
 ): config is T5EncoderModelConfig | T5EncoderBnbQuantizedLlmInt8bModelConfig => {
   return config.type === 't5_encoder';
+};
+
+export const isQwen3EncoderModelConfig = (config: AnyModelConfig): config is Qwen3EncoderModelConfig => {
+  return config.type === 'qwen3_encoder' && config.variant !== 'qwen3_06b';
+};
+
+export const isAnimaQwen3EncoderModelConfig = (config: AnyModelConfig): config is Qwen3EncoderModelConfig => {
+  return config.type === 'qwen3_encoder' && config.variant === 'qwen3_06b';
 };
 
 export const isCLIPEmbedModelConfigOrSubmodel = (
@@ -260,7 +293,7 @@ export const isSpandrelImageToImageModelConfig = (
   return config.type === 'spandrel_image_to_image';
 };
 
-export const isSigLipModelConfig = (config: AnyModelConfig): config is SigLipModelConfig => {
+export const isSigLipModelConfig = (config: AnyModelConfig): config is SigLIPModelConfig => {
   return config.type === 'siglip';
 };
 
@@ -280,16 +313,28 @@ export const isNonRefinerMainModelConfig = (config: AnyModelConfig): config is M
   return config.type === 'main' && config.base !== 'sdxl-refiner';
 };
 
-export const isCheckpointMainModelConfig = (config: AnyModelConfig): config is CheckpointModelConfig => {
-  return config.type === 'main' && (config.format === 'checkpoint' || config.format === 'bnb_quantized_nf4b');
-};
-
 export const isRefinerMainModelModelConfig = (config: AnyModelConfig): config is MainModelConfig => {
   return config.type === 'main' && config.base === 'sdxl-refiner';
 };
 
+const isFluxDevMainModelConfig = (config: AnyModelConfig): config is MainModelConfig => {
+  return config.type === 'main' && config.base === 'flux' && config.variant === 'dev';
+};
+
+const isFlux2Klein9BMainModelConfig = (config: AnyModelConfig): config is MainModelConfig => {
+  return config.type === 'main' && config.base === 'flux2' && config.name.toLowerCase().includes('9b');
+};
+
+export const isNonCommercialMainModelConfig = (config: AnyModelConfig): config is MainModelConfig => {
+  return isFluxDevMainModelConfig(config) || isFlux2Klein9BMainModelConfig(config);
+};
+
 export const isFluxFillMainModelModelConfig = (config: AnyModelConfig): config is MainModelConfig => {
   return config.type === 'main' && config.base === 'flux' && config.variant === 'dev_fill';
+};
+
+export const isZImageDiffusersMainModelConfig = (config: AnyModelConfig): config is MainModelConfig => {
+  return config.type === 'main' && config.base === 'z-image' && config.format === 'diffusers';
 };
 
 export const isTIModelConfig = (config: AnyModelConfig): config is MainModelConfig => {

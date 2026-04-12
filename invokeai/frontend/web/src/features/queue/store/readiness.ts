@@ -255,6 +255,33 @@ const getReasonsWhyCannotEnqueueGenerateTab = (arg: {
     }
   }
 
+  // FLUX.2 (Klein) extracts Qwen3 encoder and VAE from main model - no separate selections needed
+
+  if (model?.base === 'z-image') {
+    // Check if VAE source is available (either separate VAE or Qwen3 Source)
+    const hasVaeSource = params.zImageVaeModel !== null || params.zImageQwen3SourceModel !== null;
+    if (!hasVaeSource) {
+      reasons.push({ content: i18n.t('parameters.invoke.noZImageVaeSourceSelected') });
+    }
+    // Check if Qwen3 Encoder source is available (either separate Encoder or Qwen3 Source)
+    const hasQwen3Source = params.zImageQwen3EncoderModel !== null || params.zImageQwen3SourceModel !== null;
+    if (!hasQwen3Source) {
+      reasons.push({ content: i18n.t('parameters.invoke.noZImageQwen3EncoderSourceSelected') });
+    }
+  }
+
+  if (model?.base === 'anima') {
+    if (!params.animaVaeModel) {
+      reasons.push({ content: i18n.t('parameters.invoke.noAnimaVaeModelSelected') });
+    }
+    if (!params.animaQwen3EncoderModel) {
+      reasons.push({ content: i18n.t('parameters.invoke.noAnimaQwen3EncoderModelSelected') });
+    }
+    if (!params.animaT5EncoderModel) {
+      reasons.push({ content: i18n.t('parameters.invoke.noAnimaT5EncoderModelSelected') });
+    }
+  }
+
   if (model) {
     for (const lora of loras.filter(({ isEnabled }) => isEnabled === true)) {
       if (model.base !== lora.model.base) {
@@ -528,6 +555,53 @@ const getReasonsWhyCannotEnqueueCanvasTab = (arg: {
     }
   }
 
+  if (model?.base === 'flux2') {
+    // FLUX.2 (Klein) extracts Qwen3 encoder and VAE from main model - no separate selections needed
+
+    const { bbox } = canvas;
+    const gridSize = getGridSize('flux'); // FLUX.2 uses same grid size as FLUX.1
+
+    if (bbox.scaleMethod === 'none') {
+      if (bbox.rect.width % gridSize !== 0) {
+        reasons.push({
+          content: i18n.t('parameters.invoke.modelIncompatibleBboxWidth', {
+            model: 'FLUX.2',
+            width: bbox.rect.width,
+            multiple: gridSize,
+          }),
+        });
+      }
+      if (bbox.rect.height % gridSize !== 0) {
+        reasons.push({
+          content: i18n.t('parameters.invoke.modelIncompatibleBboxHeight', {
+            model: 'FLUX.2',
+            height: bbox.rect.height,
+            multiple: gridSize,
+          }),
+        });
+      }
+    } else {
+      if (bbox.scaledSize.width % gridSize !== 0) {
+        reasons.push({
+          content: i18n.t('parameters.invoke.modelIncompatibleScaledBboxWidth', {
+            model: 'FLUX.2',
+            width: bbox.scaledSize.width,
+            multiple: gridSize,
+          }),
+        });
+      }
+      if (bbox.scaledSize.height % gridSize !== 0) {
+        reasons.push({
+          content: i18n.t('parameters.invoke.modelIncompatibleScaledBboxHeight', {
+            model: 'FLUX.2',
+            height: bbox.scaledSize.height,
+            multiple: gridSize,
+          }),
+        });
+      }
+    }
+  }
+
   if (model?.base === 'cogview4') {
     const { bbox } = canvas;
     const gridSize = getGridSize('cogview4');
@@ -570,6 +644,31 @@ const getReasonsWhyCannotEnqueueCanvasTab = (arg: {
           }),
         });
       }
+    }
+  }
+
+  if (model?.base === 'z-image') {
+    // Check if VAE source is available (either separate VAE or Qwen3 Source)
+    const hasVaeSource = params.zImageVaeModel !== null || params.zImageQwen3SourceModel !== null;
+    if (!hasVaeSource) {
+      reasons.push({ content: i18n.t('parameters.invoke.noZImageVaeSourceSelected') });
+    }
+    // Check if Qwen3 Encoder source is available (either separate Encoder or Qwen3 Source)
+    const hasQwen3Source = params.zImageQwen3EncoderModel !== null || params.zImageQwen3SourceModel !== null;
+    if (!hasQwen3Source) {
+      reasons.push({ content: i18n.t('parameters.invoke.noZImageQwen3EncoderSourceSelected') });
+    }
+  }
+
+  if (model?.base === 'anima') {
+    if (!params.animaVaeModel) {
+      reasons.push({ content: i18n.t('parameters.invoke.noAnimaVaeModelSelected') });
+    }
+    if (!params.animaQwen3EncoderModel) {
+      reasons.push({ content: i18n.t('parameters.invoke.noAnimaQwen3EncoderModelSelected') });
+    }
+    if (!params.animaT5EncoderModel) {
+      reasons.push({ content: i18n.t('parameters.invoke.noAnimaT5EncoderModelSelected') });
     }
   }
 

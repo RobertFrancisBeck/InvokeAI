@@ -16,6 +16,12 @@ Invoke is a leading creative engine built to empower professionals and enthusias
 
 ![Highlighted Features - Canvas and Workflows](https://github.com/invoke-ai/InvokeAI/assets/31807370/708f7a82-084f-4860-bfbe-e2588c53548d)
 
+---
+> ## 📣 Are you a new or returning InvokeAI user?
+> Take our first annual [User's Survey](https://forms.gle/rCE5KuQ7Wfrd1UnS7)
+
+---
+
 # Documentation
 
 | **Quick Links**                                                                                                                                             |
@@ -46,7 +52,7 @@ The Unified Canvas is a fully integrated canvas implementation with support for 
 
 ### Workflows & Nodes
 
-Invoke offers a fully featured workflow management solution, enabling users to combine the power of node-based workflows with the easy of a UI. This allows for customizable generation pipelines to be developed and shared by users looking to create specific workflows to support their production use-cases.
+Invoke offers a fully featured workflow management solution, enabling users to combine the power of node-based workflows with the ease of a UI. This allows for customizable generation pipelines to be developed and shared by users looking to create specific workflows to support their production use-cases.
 
 ### Board & Gallery Management
 

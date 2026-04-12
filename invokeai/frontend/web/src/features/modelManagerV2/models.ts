@@ -10,6 +10,7 @@ import {
   isLLaVAModelConfig,
   isLoRAModelConfig,
   isNonRefinerMainModelConfig,
+  isQwen3EncoderModelConfig,
   isRefinerMainModelModelConfig,
   isSigLipModelConfig,
   isSpandrelImageToImageModelConfig,
@@ -21,15 +22,15 @@ import {
 } from 'services/api/types';
 import { objectEntries } from 'tsafe';
 
-import type { FilterableModelType } from './store/modelManagerV2Slice';
+import type { ModelCategoryType } from './store/modelManagerV2Slice';
 
 export type ModelCategoryData = {
-  category: FilterableModelType;
+  category: ModelCategoryType;
   i18nKey: string;
   filter: (config: AnyModelConfig) => boolean;
 };
 
-export const MODEL_CATEGORIES: Record<FilterableModelType, ModelCategoryData> = {
+export const MODEL_CATEGORIES: Record<ModelCategoryType, ModelCategoryData> = {
   unknown: {
     category: 'unknown',
     i18nKey: 'common.unknown',
@@ -69,6 +70,11 @@ export const MODEL_CATEGORIES: Record<FilterableModelType, ModelCategoryData> = 
     category: 't5_encoder',
     i18nKey: 'modelManager.t5Encoder',
     filter: isT5EncoderModelConfig,
+  },
+  qwen3_encoder: {
+    category: 'qwen3_encoder',
+    i18nKey: 'modelManager.qwen3Encoder',
+    filter: isQwen3EncoderModelConfig,
   },
   control_lora: {
     category: 'control_lora',
@@ -134,7 +140,10 @@ export const MODEL_BASE_TO_COLOR: Record<BaseModelType, string> = {
   sdxl: 'invokeBlue',
   'sdxl-refiner': 'invokeBlue',
   flux: 'gold',
+  flux2: 'gold',
   cogview4: 'red',
+  'z-image': 'cyan',
+  anima: 'invokePurple',
   unknown: 'red',
 };
 
@@ -155,6 +164,7 @@ export const MODEL_TYPE_TO_LONG_NAME: Record<ModelType, string> = {
   clip_vision: 'CLIP Vision',
   spandrel_image_to_image: 'Spandrel (Image to Image)',
   t5_encoder: 'T5 Encoder',
+  qwen3_encoder: 'Qwen3 Encoder',
   clip_embed: 'CLIP Embed',
   siglip: 'SigLIP',
   flux_redux: 'FLUX Redux',
@@ -172,7 +182,10 @@ export const MODEL_BASE_TO_LONG_NAME: Record<BaseModelType, string> = {
   sdxl: 'Stable Diffusion XL',
   'sdxl-refiner': 'Stable Diffusion XL Refiner',
   flux: 'FLUX',
+  flux2: 'FLUX.2',
   cogview4: 'CogView4',
+  'z-image': 'Z-Image',
+  anima: 'Anima',
   unknown: 'Unknown',
 };
 
@@ -187,7 +200,10 @@ export const MODEL_BASE_TO_SHORT_NAME: Record<BaseModelType, string> = {
   sdxl: 'SDXL',
   'sdxl-refiner': 'SDXLR',
   flux: 'FLUX',
+  flux2: 'FLUX.2',
   cogview4: 'CogView4',
+  'z-image': 'Z-Image',
+  anima: 'Anima',
   unknown: 'Unknown',
 };
 
@@ -198,8 +214,16 @@ export const MODEL_VARIANT_TO_LONG_NAME: Record<AnyModelVariant, string> = {
   dev: 'FLUX Dev',
   dev_fill: 'FLUX Dev - Fill',
   schnell: 'FLUX Schnell',
+  klein_4b: 'FLUX.2 Klein 4B',
+  klein_9b: 'FLUX.2 Klein 9B',
+  klein_9b_base: 'FLUX.2 Klein 9B Base',
+  turbo: 'Z-Image Turbo',
+  zbase: 'Z-Image Base',
   large: 'CLIP L',
   gigantic: 'CLIP G',
+  qwen3_4b: 'Qwen3 4B',
+  qwen3_8b: 'Qwen3 8B',
+  qwen3_06b: 'Qwen3 0.6B',
 };
 
 export const MODEL_FORMAT_TO_LONG_NAME: Record<ModelFormat, string> = {
@@ -213,14 +237,23 @@ export const MODEL_FORMAT_TO_LONG_NAME: Record<ModelFormat, string> = {
   embedding_folder: 'Embedding (folder)',
   invokeai: 'InvokeAI',
   t5_encoder: 'T5 Encoder',
+  qwen3_encoder: 'Qwen3 Encoder',
   bnb_quantized_int8b: 'BNB Quantized (int8b)',
   bnb_quantized_nf4b: 'BNB Quantized (nf4b)',
   gguf_quantized: 'GGUF Quantized',
   unknown: 'Unknown',
 };
 
-export const SUPPORTS_OPTIMIZED_DENOISING_BASE_MODELS: BaseModelType[] = ['flux', 'sd-3'];
+export const SUPPORTS_OPTIMIZED_DENOISING_BASE_MODELS: BaseModelType[] = ['flux', 'sd-3', 'z-image'];
 
-export const SUPPORTS_REF_IMAGES_BASE_MODELS: BaseModelType[] = ['sd-1', 'sdxl', 'flux'];
+export const SUPPORTS_REF_IMAGES_BASE_MODELS: BaseModelType[] = ['sd-1', 'sdxl', 'flux', 'flux2'];
 
-export const SUPPORTS_NEGATIVE_PROMPT_BASE_MODELS: BaseModelType[] = ['sd-1', 'sd-2', 'sdxl', 'cogview4', 'sd-3'];
+export const SUPPORTS_NEGATIVE_PROMPT_BASE_MODELS: BaseModelType[] = [
+  'sd-1',
+  'sd-2',
+  'sdxl',
+  'cogview4',
+  'sd-3',
+  'z-image',
+  'anima',
+];

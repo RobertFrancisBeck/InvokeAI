@@ -542,8 +542,17 @@ export abstract class CanvasEntityAdapterBase<T extends CanvasEntityState, U ext
       this.renderer.updateCompositingRectSize();
       this.renderer.updateCompositingRectPosition();
       this.renderer.updateCompositingRectFill();
+      this.renderer.updateOpacity();
     }
     this.renderer.syncKonvaCache();
+  };
+
+  /**
+   * Invalidates the raster cache for this entity by delegating to the renderer's
+   * `invalidateRasterCache` method.
+   */
+  invalidateRasterCache = () => {
+    this.renderer.invalidateRasterCache();
   };
 
   /**
